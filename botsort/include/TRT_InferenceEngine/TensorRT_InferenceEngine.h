@@ -15,7 +15,6 @@
 #include <unistd.h>
 #endif
 
-#include <boost/filesystem.hpp>
 #include <opencv2/opencv.hpp>
 
 #include "TRT_Logger.h"
@@ -129,10 +128,8 @@ public:
 private:
     // Const methods
     std::string get_engine_path(const std::string &onnx_model_path) const;
-    bool file_exists(const std::string &name) const;
     size_t get_size_by_dims(const nvinfer1::Dims &dims,
                             int element_size = 1) const;
-
 
     // Non-const methods
     void _set_optimization_params(const TRTOptimizerParams &params);

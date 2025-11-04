@@ -1,5 +1,7 @@
 #include "TRT_InferenceEngine/TensorRT_InferenceEngine.h"
 
+#include <filesystem>
+
 #include <NvOnnxParser.h>
 
 #ifdef _MSC_VER
@@ -65,7 +67,7 @@ bool inference_backend::TensorRTInferenceEngine::load_model(
                          .c_str());
 
     // Check if ONNX model exists
-    if (!file_exists(onnx_model_path))
+    if (!std::filesystem::exists(onnx_model_path))
     {
         _logger->log(nvinfer1::ILogger::Severity::kERROR,
                      std::string("ONNX model not found at path: ")
@@ -91,7 +93,7 @@ bool inference_backend::TensorRTInferenceEngine::load_model(
 
     // Check if engine exists, if not build it
     std::string engine_path = get_engine_path(onnx_model_path);
-    if (!file_exists(engine_path))
+    if (!std::filesystem::exists(engine_path))
     {
         _logger->log(nvinfer1::ILogger::Severity::kINFO,
                      std::string("Engine not found at path: ")
@@ -128,7 +130,7 @@ bool inference_backend::TensorRTInferenceEngine::load_model(
     }
 
     _logger->log(nvinfer1::ILogger::Severity::kERROR,
-                 std::string("Failed to load engine").c_str());
+            (std::string("Failed to load engine: ") + engine_path).c_str());
     return false;
 }
 
@@ -138,14 +140,17 @@ std::string inference_backend::TensorRTInferenceEngine::get_engine_path(
 {
     // Parent director + model name
     std::string engine_path =
-            boost::filesystem::path(onnx_model_path).parent_path().string() +
-            "/" + boost::filesystem::path(onnx_model_path).stem().string();
+            (std::filesystem::path(onnx_model_path).parent_path() /
+            std::filesystem::path(onnx_model_path).stem()).string();
 
     // Hostname
     char hostname[1024];
     gethostname(hostname, sizeof(hostname));
+#if 0
     std::string suffix(hostname);
-
+#else
+    std::string suffix("localhost");
+#endif
     suffix.append("_GPU_" +
                   get_devicename_from_deviceid(_optimization_params.gpu_id));
 
@@ -173,14 +178,6 @@ std::string inference_backend::TensorRTInferenceEngine::get_engine_path(
     engine_path.append("_" + suffix + ".engine");
     return engine_path;
 }
-
-
-bool inference_backend::TensorRTInferenceEngine::file_exists(
-        const std::string &name) const
-{
-    return boost::filesystem::exists(name);
-}
-
 
 size_t inference_backend::TensorRTInferenceEngine::get_size_by_dims(
         const nvinfer1::Dims &dims, int element_size) const
@@ -302,7 +299,7 @@ bool inference_backend::TensorRTInferenceEngine::_deserialize_engine(
     if (!engine_file)
     {
         _logger->log(nvinfer1::ILogger::Severity::kERROR,
-                     std::string("Failed to open engine file").c_str());
+                     (std::string("Failed to open engine file: ") + engine_path).c_str());
         return false;
     }
 
@@ -431,7 +428,7 @@ void inference_backend::TensorRTInferenceEngine::_build_engine(
     if (!engine_file)
     {
         _logger->log(nvinfer1::ILogger::Severity::kERROR,
-                     std::string("Failed to open engine file").c_str());
+                     (std::string("Failed to open engine file: ") + engine_path).c_str());
         return;
     }
 

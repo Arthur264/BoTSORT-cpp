@@ -47,11 +47,6 @@ find_package(Eigen3 REQUIRED)
 target_include_directories(${PROJECT_NAME} PUBLIC ${EIGEN3_INCLUDE_DIR})
 target_link_libraries(${PROJECT_NAME} Eigen3::Eigen)
 
-# Find and link Boost
-find_package(Boost REQUIRED COMPONENTS filesystem)
-target_include_directories(${PROJECT_NAME} PUBLIC ${Boost_INCLUDE_DIRS})
-target_link_libraries(${PROJECT_NAME} ${Boost_LIBRARIES})
-
 # Find and link CUDA
 find_package(CUDA QUIET)
 
