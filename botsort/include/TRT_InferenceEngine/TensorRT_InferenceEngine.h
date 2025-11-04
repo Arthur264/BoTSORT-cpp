@@ -1,7 +1,7 @@
 #pragma once
 
-#include <eigen3/Eigen/Core>
-#include <eigen3/Eigen/Dense>
+#include <Eigen/Core>
+#include <Eigen/Dense>
 #include <fstream>
 #include <memory>
 #include <numeric>
@@ -10,7 +10,10 @@
 
 #include <NvInfer.h>
 #include <NvOnnxParser.h>
+
+#ifndef _MSC_VER
 #include <unistd.h>
+#endif
 
 #include <boost/filesystem.hpp>
 #include <opencv2/opencv.hpp>
@@ -116,7 +119,7 @@ private:
 
 public:
     TensorRTInferenceEngine(TRTOptimizerParams &optimization_params,
-                            u_int8_t logging_level);
+                            int8_t logging_level);
     ~TensorRTInferenceEngine();
 
     bool load_model(const std::string &onnx_model_path);
@@ -133,7 +136,7 @@ private:
 
     // Non-const methods
     void _set_optimization_params(const TRTOptimizerParams &params);
-    void _init_TRT_logger(u_int8_t logging_level);
+    void _init_TRT_logger(int8_t logging_level);
 
     void _build_engine(const std::string &onnx_model_path);
     bool _deserialize_engine(const std::string &engine_path);

@@ -2,6 +2,11 @@
 
 #include <NvOnnxParser.h>
 
+#ifdef _MSC_VER
+#include <winsock.h>
+#endif
+
+
 namespace
 {
 std::string get_devicename_from_deviceid(int device_id)
@@ -20,7 +25,7 @@ std::string get_devicename_from_deviceid(int device_id)
 }// namespace
 
 inference_backend::TensorRTInferenceEngine::TensorRTInferenceEngine(
-        TRTOptimizerParams &optimization_params, u_int8_t logging_level)
+        TRTOptimizerParams &optimization_params, int8_t logging_level)
 {
     _set_optimization_params(optimization_params);
     _init_TRT_logger(logging_level);
@@ -44,7 +49,7 @@ void inference_backend::TensorRTInferenceEngine::_set_optimization_params(
 
 
 void inference_backend::TensorRTInferenceEngine::_init_TRT_logger(
-        u_int8_t logging_level)
+        int8_t logging_level)
 {
     _logger = std::make_unique<TRTLogger>(
             static_cast<nvinfer1::ILogger::Severity>(logging_level));
@@ -257,7 +262,7 @@ void inference_backend::TensorRTInferenceEngine::_allocate_buffers()
 #endif
         {
             _output_dims.emplace_back(dims);
-            _output_idx.emplace_back(i);
+            _output_idx.emplace_back(static_cast<int>(i));
             ++output_idx;
 
 #if NVINFER_MAJOR == 8 && NVINFER_MINOR <= 5

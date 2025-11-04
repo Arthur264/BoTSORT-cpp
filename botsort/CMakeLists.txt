@@ -17,7 +17,19 @@ endif()
 file(GLOB_RECURSE SOURCES "${PROJECT_SOURCE_DIR}/src/*.cpp")
 
 # Create library
-add_library(${PROJECT_NAME} SHARED ${SOURCES})
+if(MSVC)
+    add_library(${PROJECT_NAME} STATIC ${SOURCES})
+else()
+    add_library(${PROJECT_NAME} SHARED ${SOURCES})
+endif()
+
+if(MSVC)
+    target_link_options(${PROJECT_NAME} PRIVATE "/NODEFAULTLIB:LIBCMT")
+    #target_link_options(${PROJECT_NAME} PRIVATE "/NODEFAULTLIB:LIBCMTD")
+    #target_link_options(${PROJECT_NAME} PRIVATE "/NODEFAULTLIB:MSVCRTD")
+    target_link_libraries(${PROJECT_NAME} ws2_32)
+endif()
+
 
 # Set include directories
 target_include_directories(${PROJECT_NAME} PUBLIC
@@ -49,10 +61,24 @@ else()
     message(STATUS "CUDA version ${CUDA_VERSION_STRING} found")
     target_include_directories(${PROJECT_NAME} PUBLIC ${CUDA_INCLUDE_DIRS})
 
+    find_library(TRT_NVINFER NAMES nvinfer PATHS ${TENSORRT_DIR} PATH_SUFFIXES lib lib64)
+    find_library(TRT_NVONNXPARSER NAMES nvonnxparser PATHS ${TENSORRT_DIR} PATH_SUFFIXES lib lib64)
+    find_path(TRT_INCLUDE_DIR NAMES NvInfer.h PATHS ${TENSORRT_DIR} PATH_SUFFIXES include)
+
+    if (NOT TRT_NVINFER OR NOT TRT_NVONNXPARSER OR NOT TRT_INCLUDE_DIR)
+        message(FATAL_ERROR "Not all TensorRT was found. Check TENSORRT_DIR.")
+    else()
+        message("TRT_INCLUDE_DIR: ${TRT_INCLUDE_DIR}, TRT_NVINFER: ${TRT_NVINFER}, TRT_NVONNXPARSER: ${TRT_NVONNXPARSER}")
+    endif()
+
+    target_include_directories(${PROJECT_NAME} PRIVATE ${TRT_INCLUDE_DIR})
+    target_link_libraries(${PROJECT_NAME} ${TRT_NVINFER})
+    target_link_libraries(${PROJECT_NAME} ${TRT_NVONNXPARSER})
+
     target_sources(${PROJECT_NAME} PRIVATE
         ${PROJECT_SOURCE_DIR}/src/TRT_InferenceEngine/TensorRT_InferenceEngine.cpp
         ${PROJECT_SOURCE_DIR}/src/ReID.cpp)
-    target_link_libraries(${PROJECT_NAME} ${CUDA_LIBRARIES} nvonnxparser nvinfer)
+    target_link_libraries(${PROJECT_NAME} ${CUDA_LIBRARIES})
 endif()
 
 if(CMAKE_BUILD_TYPE MATCHES Debug)
