@@ -9,15 +9,15 @@ double lapjv(CostMatrix &cost, std::vector<int> &rowsol,
              bool return_cost)
 {
     std::vector<std::vector<float>> cost_c;
+    cost_c.resize(cost.rows());
 
     for (Eigen::Index i = 0; i < cost.rows(); i++)
     {
-        std::vector<float> row;
+        cost_c[i].reserve(cost.cols());
         for (Eigen::Index j = 0; j < cost.cols(); j++)
         {
-            row.push_back(cost(i, j));
+            cost_c[i].push_back(cost(i, j));
         }
-        cost_c.push_back(row);
     }
 
     std::vector<std::vector<float>> cost_c_extended;
@@ -93,19 +93,10 @@ double lapjv(CostMatrix &cost, std::vector<int> &rowsol,
         cost_c.assign(cost_c_extended.begin(), cost_c_extended.end());
     }
 
-    double **cost_ptr;
-    cost_ptr = new double *[n];
-    for (int i = 0; i < n; i++) cost_ptr[i] = new double[n];
+    std::vector<int> x_c(n, -1);
+    std::vector<int> y_c(n, 0);
 
-    for (int i = 0; i < n; i++)
-    {
-        for (int j = 0; j < n; j++) { cost_ptr[i][j] = cost_c[i][j]; }
-    }
-
-    int *x_c = new int[n];
-    int *y_c = new int[n];
-
-    int ret = lapjv_internal(n, cost_ptr, x_c, y_c);
+    int ret = lapjv_internal(n, cost_c, x_c, y_c);
     if (ret != 0)
     {
         std::cout << "Calculate Wrong!" << std::endl;
@@ -128,7 +119,7 @@ double lapjv(CostMatrix &cost, std::vector<int> &rowsol,
         {
             for (int i = 0; i < rowsol.size(); i++)
             {
-                if (rowsol[i] != -1) { opt += cost_ptr[i][rowsol[i]]; }
+                if (rowsol[i] != -1) { opt += cost_c[i][rowsol[i]]; }
             }
         }
     }
@@ -136,14 +127,8 @@ double lapjv(CostMatrix &cost, std::vector<int> &rowsol,
     {
         for (int i = 0; i < rowsol.size(); i++)
         {
-            opt += cost_ptr[i][rowsol[i]];
+            opt += cost_c[i][rowsol[i]];
         }
     }
-
-    for (int i = 0; i < n; i++) { delete[] cost_ptr[i]; }
-    delete[] cost_ptr;
-    delete[] x_c;
-    delete[] y_c;
-
     return opt;
 }
