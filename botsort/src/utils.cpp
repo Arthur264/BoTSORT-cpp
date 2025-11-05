@@ -9,15 +9,16 @@ double lapjv(CostMatrix &cost, std::vector<int> &rowsol,
              bool return_cost)
 {
     std::vector<std::vector<float>> cost_c;
-    cost_c.resize(cost.rows());
+    cost_c.reserve(cost.rows());
 
     for (Eigen::Index i = 0; i < cost.rows(); i++)
     {
-        cost_c[i].reserve(cost.cols());
+        std::vector<float> row;
         for (Eigen::Index j = 0; j < cost.cols(); j++)
         {
-            cost_c[i].push_back(cost(i, j));
+            row.emplace_back(cost(i, j));
         }
+        cost_c.emplace_back(row);
     }
 
     std::vector<std::vector<float>> cost_c_extended;
