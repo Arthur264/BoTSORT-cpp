@@ -51,7 +51,11 @@ target_link_libraries(${PROJECT_NAME} Eigen3::Eigen)
 find_package(CUDA QUIET)
 
 if(NOT ${CUDA_FOUND})
-    message(WARNING "CUDA not found, ReID won't be built")
+    message(WARNING "CUDA not found, ReID will be built with opencv_dnn")
+    target_sources(${PROJECT_NAME} PRIVATE
+        ${PROJECT_SOURCE_DIR}/src/ReID.cpp)
+
+    remove_definitions(-DUSE_TRT_REID)
 else()
     message(STATUS "CUDA version ${CUDA_VERSION_STRING} found")
     target_include_directories(${PROJECT_NAME} PUBLIC ${CUDA_INCLUDE_DIRS})
@@ -74,6 +78,8 @@ else()
         ${PROJECT_SOURCE_DIR}/src/TRT_InferenceEngine/TensorRT_InferenceEngine.cpp
         ${PROJECT_SOURCE_DIR}/src/ReID.cpp)
     target_link_libraries(${PROJECT_NAME} ${CUDA_LIBRARIES})
+
+    add_definitions(-DUSE_TRT_REID)
 endif()
 
 if(CMAKE_BUILD_TYPE MATCHES Debug)

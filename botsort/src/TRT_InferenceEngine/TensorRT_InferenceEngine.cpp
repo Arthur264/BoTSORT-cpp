@@ -1,5 +1,6 @@
 #include "TRT_InferenceEngine/TensorRT_InferenceEngine.h"
 
+#include <fstream>
 #include <filesystem>
 
 #include <NvOnnxParser.h>
