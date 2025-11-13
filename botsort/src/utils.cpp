@@ -8,28 +8,16 @@ double lapjv(CostMatrix &cost, std::vector<int> &rowsol,
              std::vector<int> &colsol, bool extend_cost, float cost_limit,
              bool return_cost)
 {
-    std::vector<std::vector<float>> cost_c;
-    cost_c.reserve(cost.rows());
-
-    for (Eigen::Index i = 0; i < cost.rows(); i++)
-    {
-        std::vector<float> row;
-        for (Eigen::Index j = 0; j < cost.cols(); j++)
-        {
-            row.emplace_back(cost(i, j));
-        }
-        cost_c.emplace_back(row);
-    }
-
-    std::vector<std::vector<float>> cost_c_extended;
-
     int n_rows = static_cast<int>(cost.rows());
     int n_cols = static_cast<int>(cost.cols());
     rowsol.resize(n_rows);
     colsol.resize(n_cols);
 
     int n = 0;
-    if (n_rows == n_cols) { n = n_rows; }
+    if (n_rows == n_cols)
+    {
+        n = n_rows;
+    }
     else
     {
         if (!extend_cost)
@@ -39,59 +27,71 @@ double lapjv(CostMatrix &cost, std::vector<int> &rowsol,
         }
     }
 
+    std::vector<std::vector<float>> cost_c;
     if (extend_cost || cost_limit < LONG_MAX)
     {
         n = n_rows + n_cols;
-        cost_c_extended.resize(n);
-        for (int i = 0; i < cost_c_extended.size(); i++)
-            cost_c_extended[i].resize(n);
+        cost_c.resize(n);
+        for (int i = 0; i < cost_c.size(); i++)
+            cost_c[i].resize(n);
 
         if (cost_limit < LONG_MAX)
         {
-            for (int i = 0; i < cost_c_extended.size(); i++)
+            for (int i = 0; i < cost_c.size(); i++)
             {
-                for (int j = 0; j < cost_c_extended[i].size(); j++)
+                for (int j = 0; j < cost_c[i].size(); j++)
                 {
-                    cost_c_extended[i][j] = cost_limit / 2.0;
+                    cost_c[i][j] = cost_limit / 2.0;
                 }
             }
         }
         else
         {
             float cost_max = -1;
+            for (Eigen::Index i = 0; i < cost.rows(); ++i)
+            {
+                for (Eigen::Index j = 0; j < cost.cols(); ++j)
+                {
+                    if (cost(i, j) > cost_max)
+                        cost_max = cost(i, j);
+                }
+            }
             for (int i = 0; i < cost_c.size(); i++)
             {
                 for (int j = 0; j < cost_c[i].size(); j++)
                 {
-                    if (cost_c[i][j] > cost_max) cost_max = cost_c[i][j];
-                }
-            }
-            for (int i = 0; i < cost_c_extended.size(); i++)
-            {
-                for (int j = 0; j < cost_c_extended[i].size(); j++)
-                {
-                    cost_c_extended[i][j] = cost_max + 1;
+                    cost_c[i][j] = cost_max + 1;
                 }
             }
         }
 
-        for (int i = n_rows; i < cost_c_extended.size(); i++)
+        for (int i = n_rows; i < cost_c.size(); i++)
         {
-            for (int j = n_cols; j < cost_c_extended[i].size(); j++)
+            for (int j = n_cols; j < cost_c[i].size(); j++)
             {
-                cost_c_extended[i][j] = 0;
+                cost_c[i][j] = 0;
             }
         }
-        for (int i = 0; i < n_rows; i++)
+        for (Eigen::Index i = 0; i < cost.rows(); ++i)
         {
-            for (int j = 0; j < n_cols; j++)
+            for (Eigen::Index j = 0; j < cost.cols(); ++j)
             {
-                cost_c_extended[i][j] = cost_c[i][j];
+                cost_c[i][j] = cost(i, j);
             }
         }
-
-        cost_c.clear();
-        cost_c.assign(cost_c_extended.begin(), cost_c_extended.end());
+    }
+    else
+    {
+        cost_c.reserve(cost.rows());
+        for (Eigen::Index i = 0; i < cost.rows(); ++i)
+        {
+            std::vector<float> row;
+            for (Eigen::Index j = 0; j < cost.cols(); ++j)
+            {
+                row.emplace_back(cost(i, j));
+            }
+            cost_c.emplace_back(row);
+        }
     }
 
     std::vector<int> x_c(n, -1);
