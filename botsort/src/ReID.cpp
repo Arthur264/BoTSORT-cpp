@@ -208,12 +208,11 @@ public:
 
         if (!_net.empty())
         {
-
             cv::Mat obj;
             cv::resize(image_patch, obj, _input_size, 0., 0., cv::INTER_CUBIC);
             cv::Mat blob =
                     cv::dnn::blobFromImage(obj, 1.0 / 255.0, cv::Size(),
-                                           cv::Scalar(), false, false, CV_32F);
+                                           cv::Scalar(), _swapRB, false, CV_32F);
 
             _net.setInput(blob);
 
