@@ -13,8 +13,16 @@ if(NOT CMAKE_BUILD_TYPE)
         "MinSizeRel" "RelWithDebInfo")
 endif()
 
+# Find CUDA before collecting sources (needed to exclude TRT when CUDA unavailable)
+find_package(CUDA QUIET)
+
 # Collect all source files
 file(GLOB_RECURSE SOURCES "${PROJECT_SOURCE_DIR}/src/*.cpp")
+
+# Exclude TensorRT sources when CUDA/TensorRT is not available (avoids compiling NvInfer.h)
+if(NOT ${CUDA_FOUND})
+    list(FILTER SOURCES EXCLUDE REGEX ".*TRT_InferenceEngine.*")
+endif()
 
 # Create library
 if(MSVC)
@@ -47,14 +55,8 @@ find_package(Eigen3 REQUIRED)
 target_include_directories(${PROJECT_NAME} PUBLIC ${EIGEN3_INCLUDE_DIR})
 target_link_libraries(${PROJECT_NAME} Eigen3::Eigen)
 
-# Find and link CUDA
-find_package(CUDA QUIET)
-
 if(NOT ${CUDA_FOUND})
     message(WARNING "CUDA not found, ReID will be built with opencv_dnn")
-    target_sources(${PROJECT_NAME} PRIVATE
-        ${PROJECT_SOURCE_DIR}/src/ReID.cpp)
-
     remove_definitions(-DUSE_TRT_REID)
 else()
     message(STATUS "CUDA version ${CUDA_VERSION_STRING} found")
@@ -73,10 +75,6 @@ else()
     target_include_directories(${PROJECT_NAME} PRIVATE ${TRT_INCLUDE_DIR})
     target_link_libraries(${PROJECT_NAME} ${TRT_NVINFER})
     target_link_libraries(${PROJECT_NAME} ${TRT_NVONNXPARSER})
-
-    target_sources(${PROJECT_NAME} PRIVATE
-        ${PROJECT_SOURCE_DIR}/src/TRT_InferenceEngine/TensorRT_InferenceEngine.cpp
-        ${PROJECT_SOURCE_DIR}/src/ReID.cpp)
     target_link_libraries(${PROJECT_NAME} ${CUDA_LIBRARIES})
 
     add_definitions(-DUSE_TRT_REID)
